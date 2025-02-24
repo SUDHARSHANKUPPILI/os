@@ -1,0 +1,81 @@
+#include <stdio.h>
+
+struct Process {
+    int number, arrivalTime, burstTime, remainingTime, completionTime, turnaroundTime, waitingTime;
+};
+
+struct Process readProcess(int i) {
+    struct Process p;
+    printf("\nProcess No: %d\n", i);
+    p.number = i;
+    printf("Enter Arrival Time: ");
+    scanf("%d", &p.arrivalTime);
+    printf("Enter Burst Time: ");
+    scanf("%d", &p.burstTime);
+    p.remainingTime = p.burstTime;
+    return p;
+}
+
+int main() {
+    int n, timeQuantum, currentTime = 0, remainingProcesses;
+    float averageTurnaroundTime = 0, averageWaitingTime = 0;
+
+    printf("<--Round Robin Scheduling Algorithm-->\n");
+    printf("Enter Number of Processes: ");
+    scanf("%d", &n);
+    printf("Enter Time Quantum: ");
+    scanf("%d", &timeQuantum);
+
+    struct Process processes[n];
+    for (int i = 0; i < n; i++) {
+        processes[i] = readProcess(i + 1);
+    }
+
+    // Sort by arrival time
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (processes[j].arrivalTime > processes[j + 1].arrivalTime) {
+                struct Process temp = processes[j];
+                processes[j] = processes[j + 1];
+                processes[j + 1] = temp;
+            }
+        }
+    }
+
+    remainingProcesses = n;
+    printf("\nProcessNo\tAT\tBT\tCT\tTAT\tWT\n");
+
+    int index = 0;
+    while (remainingProcesses != 0) {
+        if (processes[index].remainingTime <= timeQuantum && processes[index].remainingTime > 0) {
+            currentTime += processes[index].remainingTime;
+            processes[index].remainingTime = 0;
+        } else if (processes[index].remainingTime > 0) {
+            processes[index].remainingTime -= timeQuantum;
+            currentTime += timeQuantum;
+        }
+
+        if (processes[index].remainingTime == 0) {
+            remainingProcesses--;
+            processes[index].completionTime = currentTime;
+            processes[index].turnaroundTime = processes[index].completionTime - processes[index].arrivalTime;
+            processes[index].waitingTime = processes[index].turnaroundTime - processes[index].burstTime;
+
+            averageTurnaroundTime += processes[index].turnaroundTime;
+            averageWaitingTime += processes[index].waitingTime;
+
+            printf("P%d\t\t%d\t%d\t%d\t%d\t%d\n", processes[index].number, processes[index].arrivalTime, processes[index].burstTime, processes[index].completionTime, processes[index].turnaroundTime, processes[index].waitingTime);
+        }
+
+        index = (index + 1) % n;
+        while (processes[index].arrivalTime > currentTime && processes[index].remainingTime > 0) {
+            index = (index + 1) % n;
+        }
+    }
+
+    averageTurnaroundTime /= n;
+    averageWaitingTime /= n;
+    printf("\nAverage Turnaround Time = %f\nAverage Waiting Time = %f\n", averageTurnaroundTime, averageWaitingTime);
+
+    return 0;
+}
