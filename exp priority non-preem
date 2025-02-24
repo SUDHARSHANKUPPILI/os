@@ -1,0 +1,83 @@
+#include <stdio.h>
+#define MIN -9999
+
+struct Process {
+    int number, arrivalTime, burstTime, completionTime, waitingTime, turnaroundTime, priority, status;
+};
+
+struct Process readProcess(int i) {
+    struct Process p;
+    printf("\nProcess No: %d\n", i);
+    p.number = i;
+    printf("Enter Arrival Time: ");
+    scanf("%d", &p.arrivalTime);
+    printf("Enter Burst Time: ");
+    scanf("%d", &p.burstTime);
+    printf("Enter Priority: ");
+    scanf("%d", &p.priority);
+    p.status = 0;
+    return p;
+}
+
+int main() {
+    int n, remaining, currentTime = 0;
+    struct Process processes[10];
+    float avgTurnaroundTime = 0, avgWaitingTime = 0;
+
+    printf("<--Highest Priority First Scheduling Algorithm (Non-Preemptive)-->\n");
+    printf("Enter Number of Processes: ");
+    scanf("%d", &n);
+
+    for (int i = 0; i < n; i++) {
+        processes[i] = readProcess(i + 1);
+    }
+
+    // Sort by arrival time
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (processes[j].arrivalTime > processes[j + 1].arrivalTime) {
+                struct Process temp = processes[j];
+                processes[j] = processes[j + 1];
+                processes[j + 1] = temp;
+            }
+        }
+    }
+
+    remaining = n;
+    printf("\nProcessNo\tAT\tBT\tPri\tCT\tTAT\tWT\tRT\n");
+
+    while (remaining != 0) {
+        int highestPriorityIndex = -1;
+        for (int i = 0; i < n; i++) {
+            if (processes[i].arrivalTime <= currentTime && processes[i].status != 1) {
+                if (highestPriorityIndex == -1 || processes[i].priority > processes[highestPriorityIndex].priority) {
+                    highestPriorityIndex = i;
+                }
+            }
+        }
+
+        if (highestPriorityIndex == -1) {
+            currentTime++;
+            continue;
+        }
+
+        processes[highestPriorityIndex].completionTime = currentTime + processes[highestPriorityIndex].burstTime;
+        currentTime = processes[highestPriorityIndex].completionTime;
+        processes[highestPriorityIndex].turnaroundTime = processes[highestPriorityIndex].completionTime - processes[highestPriorityIndex].arrivalTime;
+        processes[highestPriorityIndex].waitingTime = processes[highestPriorityIndex].turnaroundTime - processes[highestPriorityIndex].burstTime;
+
+        avgTurnaroundTime += processes[highestPriorityIndex].turnaroundTime;
+        avgWaitingTime += processes[highestPriorityIndex].waitingTime;
+
+        processes[highestPriorityIndex].status = 1;
+        remaining--;
+
+        printf("P%d\t\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", processes[highestPriorityIndex].number, processes[highestPriorityIndex].arrivalTime, processes[highestPriorityIndex].burstTime, processes[highestPriorityIndex].priority, processes[highestPriorityIndex].completionTime, processes[highestPriorityIndex].turnaroundTime, processes[highestPriorityIndex].waitingTime, processes[highestPriorityIndex].waitingTime);
+    }
+
+    avgTurnaroundTime /= n;
+    avgWaitingTime /= n;
+    printf("\nAverage Turnaround Time = %f\nAverage Waiting Time = %f\n", avgTurnaroundTime, avgWaitingTime);
+
+    return 0;
+}
